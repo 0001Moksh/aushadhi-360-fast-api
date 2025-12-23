@@ -34,7 +34,7 @@ db = mongo_client["aushadhi360"]
 users_collection = db["users"]
 
 # ================= MODELS =================
-embed_model = None
+embed_model = SentenceTransformer("intfloat/multilingual-e5-base")
 llm_client = genai.Client(api_key=API_KEY)
 
 # ================= GLOBAL CACHE =================
@@ -100,7 +100,6 @@ def get_user_data(mail: str, password: str):
 # ================= EMBEDDING BUILDER =================
 def build_embeddings_for_user(mail: str, password: str):
     global FAISS_INDEX, MEDICINE_DF, EMBEDDING_DIM
-    global embed_model
 
     user_data = get_user_data(mail, password)
     if not user_data:
@@ -115,10 +114,7 @@ def build_embeddings_for_user(mail: str, password: str):
 
     df["text"] = df["Cover Disease"].fillna("") + " || " + df["Symptoms"].fillna("")
 
-    if embed_model is None:
-        # Smaller, memory-friendly multilingual model
-        embed_model = SentenceTransformer("intfloat/multilingual-e5-small")
-    embeddings = embed_model.encode(df["text"].tolist(), show_progress_bar=False, normalize_embeddings=True)
+    embeddings = embed_model.encode(df["text"].tolist(), show_progress_bar=False)
     df["embedding"] = embeddings.tolist()
 
     vectors = np.array(df["embedding"].tolist())
@@ -137,13 +133,10 @@ def build_embeddings_for_user(mail: str, password: str):
 
 # ================= SEARCH =================
 def collect_data_for(query: str, k: int = 3):
-    global embed_model
     if FAISS_INDEX is None or MEDICINE_DF is None:
         raise HTTPException(status_code=400, detail="AI not ready yet")
 
-    if embed_model is None:
-        embed_model = SentenceTransformer("intfloat/multilingual-e5-small")
-    vec = embed_model.encode(query, normalize_embeddings=True)
+    vec = embed_model.encode(query)
     svec = np.array(vec).reshape(1, -1)
 
     distances, indices = FAISS_INDEX.search(svec, k)
