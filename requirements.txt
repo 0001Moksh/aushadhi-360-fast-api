@@ -3,6 +3,9 @@ uvicorn[standard]==0.30.6
 python-dotenv==1.0.1
 pandas==2.2.3
 sentence-transformers==3.1.1
+torch==2.3.1+cpu ; platform_system != 'Windows'
+--extra-index-url https://download.pytorch.org/whl/cpu
+psutil==6.1.0
 google-genai==0.5.0
 faiss-cpu==1.9.0.post1
 pymongo==4.15.4
