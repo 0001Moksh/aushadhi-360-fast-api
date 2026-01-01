@@ -4,21 +4,32 @@ import json
 import numpy as np
 import pandas as pd
 import dotenv
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from pymongo import MongoClient
 from sentence_transformers import SentenceTransformer
-from google import genai
-from google.genai.errors import ClientError as GenAIClientError
+from groq import Groq
 from fastapi.middleware.cors import CORSMiddleware
 
 # ================= ENV =================
 dotenv.load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
-API_KEY = os.getenv("API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
+# ================= LIFESPAN =================
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    print("🚀 Aushadhi 360 API starting...")
+    yield
+    # Shutdown
+    print("🛑 Aushadhi 360 API shutting down...")
+    if mongo_client:
+        mongo_client.close()
 
 # ================= APP =================
-app = FastAPI(title="Aushadhi 360 API")
+app = FastAPI(title="Aushadhi 360 API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,7 +46,8 @@ users_collection = db["users"]
 
 # ================= MODELS =================
 embed_model = SentenceTransformer("intfloat/multilingual-e5-base")
-llm_client = genai.Client(api_key=API_KEY)
+
+llm_client = Groq(api_key=GROQ_API_KEY)
 
 # ================= GLOBAL CACHE =================
 FAISS_INDEX = None
@@ -44,11 +56,13 @@ EMBEDDING_DIM = None
 
 # ================= UTILS =================
 def llm(prompt: str) -> str:
-    response = llm_client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt,
+    response = llm_client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {"role": "user", "content": prompt}
+        ]
     )
-    return response.text.strip()
+    return response.choices[0].message.content.strip()
 
 
 def build_fallback_payload(query: str, medicines: list, reason: str):
@@ -155,7 +169,7 @@ def root():
 
 # ---------- LOGIN (PREPARE AI IN BACKGROUND) ----------
 @app.post("/login")
-def login(mail: str, password: str, background_tasks: BackgroundTasks):
+def login(background_tasks: BackgroundTasks, mail: str = "demo@aushdi.com",password: str ="demo123"):
     user = get_user_data(mail, password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
@@ -225,16 +239,12 @@ Return STRICTLY valid JSON:
         data["query"] = query
         return data
 
-    except GenAIClientError as e:
-        status = getattr(e, "status_code", None)
-        if status == 429 or "RESOURCE_EXHAUSTED" in str(e):
-            return build_fallback_payload(query, medicines, reason="quota exceeded")
-        return build_fallback_payload(query, medicines, reason=str(e))
     except Exception as e:
+        if "429" in str(e) or "quota" in str(e).lower():
+            return build_fallback_payload(query, medicines, reason="quota exceeded")
         return build_fallback_payload(query, medicines, reason=str(e))
 
 
 # ================= RUN =================
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
-

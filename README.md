@@ -1,11 +1,11 @@
 # Aushadhi 360 API
 
-A FastAPI-based medical information retrieval system using AI embeddings and Google Gemini LLM.
+A FastAPI-based medical information retrieval system using AI embeddings and Groq LLM.
 
 ## Features
 - MongoDB integration
 - Sentence transformers for embeddings
-- Google Gemini API integration
+- Groq LLM API integration
 - FAISS vector search
 - CORS enabled
 
@@ -20,7 +20,7 @@ pip install -r requirements.txt
 Create a `.env` file:
 ```
 DATABASE_URL=your_mongodb_connection_string
-API_KEY=your_google_gemini_api_key
+GROQ_API_KEY=your_groq_api_key
 ```
 
 3. **Run locally:**
