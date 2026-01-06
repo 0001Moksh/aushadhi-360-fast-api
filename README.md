@@ -20,8 +20,9 @@ pip install -r requirements.txt
 Create a `.env` file:
 ```
 DATABASE_URL=your_mongodb_connection_string
-GROQ_API_KEY=your_groq_api_key
 ```
+
+Groq access keys are stored per user document (field: `groqKeyAssist`) and are supplied by each user at request time rather than via a shared environment variable.
 
 3. **Run locally:**
 ```bash
