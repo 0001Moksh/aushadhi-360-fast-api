@@ -3,6 +3,11 @@
 .env.local
 .env.*.local
 
+# Service Account (NEVER commit)
+service-account.json
+google-credentials.json
+*-service-account.json
+
 # Python
 __pycache__/
 *.py[cod]
@@ -45,6 +50,10 @@ env/
 # Notebooks
 .ipynb_checkpoints/
 Untitled.ipynb
+
+# FAISS indices (local testing)
+*.index
+*.faiss
 
 # Deployment
 .vercel/
