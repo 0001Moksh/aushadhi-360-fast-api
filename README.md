@@ -8,6 +8,13 @@
 
 Aushadhi 360 is a secure, per-user FastAPI backend that acts as your personal AI medical assistant. It uses **vector embeddings + FAISS** to retrieve relevant medicines from your private collection and **Groq LLM** to generate contextual instructions, dosages, and guidance.
 
+### Demo Video
+
+<video controls width="100%">
+  <source src="./assests/demo_video.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
 ---
 
 ## ✨ Features
